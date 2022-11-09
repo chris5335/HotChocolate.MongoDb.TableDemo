@@ -1,0 +1,156 @@
+﻿@page "/fetchdata"
+@using StrawberryShake
+@inject HttpClient Http
+
+<PageTitle>Weather forecast</PageTitle>
+
+<MudText Typo="Typo.h3" GutterBottom="true">Person List</MudText>
+<MudText Class="mb-8">This component demonstrates fetching data from the server.</MudText>
+<MudTable Dense="true" Elevation="25" Hover="true" Striped="true"
+          ServerData="async state => await ServerReload(state)"
+          @ref="@_table">
+    <ToolBarContent>
+        <MudTextField T="string"
+                      ValueChanged="s => OnSearch(s)"
+                      Placeholder="Search"
+                      DebounceInterval="300"
+                      Adornment="Adornment.Start"
+                      AdornmentIcon="@Icons.Material.Filled.Search"
+                      IconSize="Size.Medium"
+                      Class="mt-0">
+        </MudTextField>
+    </ToolBarContent>
+    <HeaderContent>
+        <MudTh>
+
+            <MudTableSortLabel SortLabel="@(nameof(IGetPersons_Person_Nodes.Id))" T="IGetPersons_Person_Nodes">Id</MudTableSortLabel>
+        </MudTh>
+        <MudTh>
+            <MudTableSortLabel SortLabel="@(nameof(IGetPersons_Person_Nodes.Name))" T="IGetPersons_Person_Nodes">Name</MudTableSortLabel>
+        </MudTh>
+        <MudTh>
+            <MudTableSortLabel SortLabel="@(nameof(IGetPersons_Person_Nodes.Ordinal))" T="IGetPersons_Person_Nodes">Ordinal</MudTableSortLabel>
+        </MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Status">@context.Id</MudTd>
+        <MudTd DataLabel="Name">@context.Name</MudTd>
+        <MudTd DataLabel="Ordinal">@context.Ordinal</MudTd>
+    </RowTemplate>
+    <NoRecordsContent>
+        <MudText>No matching results found.</MudText>
+    </NoRecordsContent>
+    <LoadingContent>
+        <MudProgressCircular Color="Color.Primary" Indeterminate="true"/>
+    </LoadingContent>
+    <PagerContent>
+        <MudTablePager/>
+    </PagerContent>
+</MudTable>
+
+@code {
+    private PageData _pageData = new();
+    private IGetPersons_Person_PageInfo? _pageInfo;
+
+    [Inject]
+    private DemoGraphqlClient GraphqlClient { get; set; } = default!;
+
+    private async Task<TableData<IGetPersons_Person_Nodes>> ServerReload(TableState state)
+    {
+        try
+        {
+            _pageData = _pageData with {SortInput = GetSorting(state)};
+            SetPaging(state);
+            IOperationResult<IGetPersonsResult> result = await GraphqlClient.GetPersons.ExecuteAsync(
+                _pageData.FilterInput,
+                _pageData.SortInput,
+                _pageData.FirstNumberOfRows,
+                _pageData.LastNumberOfRows,
+                _pageData.BeforeCursor,
+                _pageData.AfterCursor,
+                CancellationToken.None);
+
+            if (result.IsSuccessResult() && result.Data is {Person:{ } })
+            {
+                _pageInfo = result.Data.Person.PageInfo;
+                return new TableData<IGetPersons_Person_Nodes>
+                {
+                    TotalItems = result.Data.Person.TotalCount,
+                    Items = result.Data.Person.Nodes
+                };
+            }
+
+            foreach (IClientError error in result.Errors)
+            {
+                // Snackbar.Add(error.Message, Severity.Error);
+            }
+
+            return new TableData<IGetPersons_Person_Nodes>();
+        }
+        catch (Exception e)
+        {
+            Console.WriteLine(e);
+            throw;
+        }
+    }
+
+    private void SetPaging(TableState state)
+    {
+        if (_pageInfo is null) return;
+
+        if (state.PageSize != _pageData.CurrentPageSize)
+        {
+            _pageData = _pageData switch
+            {
+            {AfterCursor: not null} => _pageData with {FirstNumberOfRows = state.PageSize},
+            {BeforeCursor: not null} => _pageData with {LastNumberOfRows = state.PageSize},
+                _ => _pageData
+                };
+        }
+
+        if (state.Page > _pageData.CurrentPageNumber)
+        {
+            _pageData = _pageData with {
+                FirstNumberOfRows = state.PageSize,
+                AfterCursor = _pageInfo.EndCursor,
+                CurrentPageNumber = state.Page
+                };
+        }
+
+        if (state.Page < _pageData.CurrentPageNumber)
+        {
+            _pageData = _pageData with {
+                LastNumberOfRows = state.PageSize,
+                BeforeCursor = _pageInfo.StartCursor,
+                CurrentPageNumber = state.Page
+                };
+        }
+    }
+
+    private static PersonSortInput[]? GetSorting(TableState state) =>
+        state.SortLabel switch{
+            nameof(IGetPersons_Person_Nodes.Id) => new[] { new PersonSortInput { Id = GetSortDirection(state.SortDirection) } },
+            nameof(IGetPersons_Person_Nodes.Name) => new[] { new PersonSortInput { Name = GetSortDirection(state.SortDirection) } },
+            nameof(IGetPersons_Person_Nodes.Ordinal) => new[] { new PersonSortInput { Ordinal = GetSortDirection(state.SortDirection) } },
+            _ => null
+            };
+
+    private static SortEnumType GetSortDirection(SortDirection sortDirection)
+    {
+        switch (sortDirection)
+        {
+            case SortDirection.Ascending:
+                return SortEnumType.Asc;
+            case SortDirection.Descending:
+            default: //not sure when this would ever happen
+                return SortEnumType.Desc;
+        }
+    }
+
+    private MudTable<IGetPersons_Person_Nodes> _table;
+    private void OnSearch(string s)
+    {
+        _pageData = _pageData with { SearchString = s};
+        _table.ReloadServerData();
+    }
+}
