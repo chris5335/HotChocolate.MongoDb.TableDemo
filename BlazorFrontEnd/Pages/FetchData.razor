@@ -60,7 +60,7 @@
         try
         {
             _pageData = _pageData with {SortInput = GetSorting(state)};
-            SetPaging(state);
+            _pageData = _pageData.SetPaging(state, _pageInfo?.StartCursor, _pageInfo?.EndCursor);
             IOperationResult<IGetPersonsResult> result = await GraphqlClient.GetPersons.ExecuteAsync(
                 _pageData.FilterInput,
                 _pageData.SortInput,
@@ -73,6 +73,8 @@
             if (result.IsSuccessResult() && result.Data is {Person:{ } })
             {
                 _pageInfo = result.Data.Person.PageInfo;
+                _pageData = _pageData with {TotalCount = result.Data.Person.TotalCount};
+
                 return new TableData<IGetPersons_Person_Nodes>
                 {
                     TotalItems = result.Data.Person.TotalCount,
@@ -82,7 +84,7 @@
 
             foreach (IClientError error in result.Errors)
             {
-                // Snackbar.Add(error.Message, Severity.Error);
+    // Snackbar.Add(error.Message, Severity.Error);
             }
 
             return new TableData<IGetPersons_Person_Nodes>();
@@ -94,63 +96,21 @@
         }
     }
 
-    private void SetPaging(TableState state)
-    {
-        if (_pageInfo is null) return;
-
-        if (state.PageSize != _pageData.CurrentPageSize)
-        {
-            _pageData = _pageData switch
-            {
-            {AfterCursor: not null} => _pageData with {FirstNumberOfRows = state.PageSize},
-            {BeforeCursor: not null} => _pageData with {LastNumberOfRows = state.PageSize},
-                _ => _pageData
-                };
-        }
-
-        if (state.Page > _pageData.CurrentPageNumber)
-        {
-            _pageData = _pageData with {
-                FirstNumberOfRows = state.PageSize,
-                AfterCursor = _pageInfo.EndCursor,
-                CurrentPageNumber = state.Page
-                };
-        }
-
-        if (state.Page < _pageData.CurrentPageNumber)
-        {
-            _pageData = _pageData with {
-                LastNumberOfRows = state.PageSize,
-                BeforeCursor = _pageInfo.StartCursor,
-                CurrentPageNumber = state.Page
-                };
-        }
-    }
 
     private static PersonSortInput[]? GetSorting(TableState state) =>
         state.SortLabel switch{
-            nameof(IGetPersons_Person_Nodes.Id) => new[] { new PersonSortInput { Id = GetSortDirection(state.SortDirection) } },
-            nameof(IGetPersons_Person_Nodes.Name) => new[] { new PersonSortInput { Name = GetSortDirection(state.SortDirection) } },
-            nameof(IGetPersons_Person_Nodes.Ordinal) => new[] { new PersonSortInput { Ordinal = GetSortDirection(state.SortDirection) } },
+            nameof(IGetPersons_Person_Nodes.Id) => new[] { new PersonSortInput { Id = state.SortDirection.MapSortDirection() } },
+            nameof(IGetPersons_Person_Nodes.Name) => new[] { new PersonSortInput { Name = state.SortDirection.MapSortDirection() } },
+            nameof(IGetPersons_Person_Nodes.Ordinal) => new[] { new PersonSortInput { Ordinal = state.SortDirection.MapSortDirection() } },
             _ => null
             };
 
-    private static SortEnumType GetSortDirection(SortDirection sortDirection)
-    {
-        switch (sortDirection)
-        {
-            case SortDirection.Ascending:
-                return SortEnumType.Asc;
-            case SortDirection.Descending:
-            default: //not sure when this would ever happen
-                return SortEnumType.Desc;
-        }
-    }
+    private MudTable<IGetPersons_Person_Nodes> _table = default!;
 
-    private MudTable<IGetPersons_Person_Nodes> _table;
     private void OnSearch(string s)
     {
-        _pageData = _pageData with { SearchString = s};
+        _pageData = _pageData.SetSearchString(s);
         _table.ReloadServerData();
     }
+
 }

@@ -1,5 +1,6 @@
 using GraphQlServer;
 using HotChocolate.Data.Filters;
+using HotChocolate.Types.Pagination;
 using MongoDB.Driver;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -13,6 +14,12 @@ builder.Services.AddCors(options =>
 builder.Services
     .AddSingleton(client.GetDatabase("TestTableDb"))
     .AddGraphQLServer()
+    .SetPagingOptions(new PagingOptions
+    {
+        DefaultPageSize = 10,
+        MaxPageSize = 101,
+        IncludeTotalCount = true
+    })
     .AddQueryType<Query>()
     .AddMongoDbFiltering()
     .AddMongoDbSorting()

@@ -16,7 +16,7 @@ public sealed class Query
 
     private static int _ordinal = 1;
 
-    [UsePaging(IncludeTotalCount = true, DefaultPageSize = 10)]
+    [UsePaging]
     [UseFiltering]
     [UseSorting]
     public async Task<IExecutable<Person>> GetPerson([Service] IMongoDatabase database)
