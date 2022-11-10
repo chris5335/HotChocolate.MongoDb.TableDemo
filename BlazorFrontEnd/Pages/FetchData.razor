@@ -59,7 +59,7 @@
     {
         try
         {
-            _pageData = _pageData with {SortInput = GetSorting(state)};
+            _pageData = SetSorting(_pageData, state);
             _pageData = _pageData.SetPaging(state, _pageInfo?.StartCursor, _pageInfo?.EndCursor);
             IOperationResult<IGetPersonsResult> result = await GraphqlClient.GetPersons.ExecuteAsync(
                 _pageData.FilterInput,
@@ -97,6 +97,8 @@
     }
 
 
+    private static PageData SetSorting(PageData pageData, TableState state) => pageData with {SortInput = GetSorting(state)};
+    
     private static PersonSortInput[]? GetSorting(TableState state) =>
         state.SortLabel switch{
             nameof(IGetPersons_Person_Nodes.Id) => new[] { new PersonSortInput { Id = state.SortDirection.MapSortDirection() } },
