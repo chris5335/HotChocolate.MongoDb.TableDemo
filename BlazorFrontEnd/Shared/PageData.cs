@@ -25,21 +25,6 @@ public sealed record PageData
     public int LastPageNumber => PageCount - 1;
     public string SearchString { get; init; } = string.Empty;
 
-    public PersonSortInput[]? SortInput { get; init; }
-
-    public PersonFilterInput FilterInput => GetFilterInput();
-
-    private PersonFilterInput GetFilterInput() => new() { And = GetFilterAnd().ToList() };
-
-    private IEnumerable<PersonFilterInput> GetFilterAnd()
-    {
-        if (string.IsNullOrWhiteSpace(SearchString) == false)
-        {
-            yield return new PersonFilterInput
-                { Name = new StringOperationFilterInput { Contains = SearchString } };
-        }
-    }
-
     public static TSort[]? GetSortInput<TSort>(string fieldName, SortDirection sortDirection) where TSort : new()
     {
         if (string.IsNullOrWhiteSpace(fieldName))
