@@ -59,11 +59,10 @@
     {
         try
         {
-            _pageData = SetSorting(_pageData, state);
             _pageData = _pageData.SetPaging(state, _pageInfo?.StartCursor, _pageInfo?.EndCursor);
             IOperationResult<IGetPersonsResult> result = await GraphqlClient.GetPersons.ExecuteAsync(
-                _pageData.FilterInput,
-                _pageData.SortInput,
+                _pageData.GetFilterInput<PersonFilterInput>(),
+                PageData.GetSortInput<PersonSortInput>(state.SortLabel, state.SortDirection),
                 _pageData.FirstNumberOfRows,
                 _pageData.LastNumberOfRows,
                 _pageData.BeforeCursor,
@@ -95,17 +94,6 @@
             throw;
         }
     }
-
-
-    private static PageData SetSorting(PageData pageData, TableState state) => pageData with {SortInput = GetSorting(state)};
-    
-    private static PersonSortInput[]? GetSorting(TableState state) =>
-        state.SortLabel switch{
-            nameof(IPerson.Id) => new[] { new PersonSortInput { Id = state.SortDirection.MapSortDirection() } },
-            nameof(IPerson.Name) => new[] { new PersonSortInput { Name = state.SortDirection.MapSortDirection() } },
-            nameof(IPerson.Ordinal) => new[] { new PersonSortInput { Ordinal = state.SortDirection.MapSortDirection() } },
-            _ => null
-            };
 
     private MudTable<IPerson> _table = default!;
 

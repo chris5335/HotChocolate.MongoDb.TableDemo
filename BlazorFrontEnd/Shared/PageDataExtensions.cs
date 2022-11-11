@@ -19,7 +19,7 @@ public static class PageDataExtensions
             CurrentPageNumber = 0
         };
 
-    public static PageData SetFirstPage(this PageData pageData) =>
+    private static PageData SetFirstPage(this PageData pageData) =>
         pageData with
         {
             FirstNumberOfRows = pageData.CurrentPageSize,
@@ -29,7 +29,7 @@ public static class PageDataExtensions
             CurrentPageNumber = 0
         };
 
-    public static PageData SetLastPage(this PageData pageData, int pageNumber) =>
+    private static PageData SetLastPage(this PageData pageData, int pageNumber) =>
         pageData with
         {
             FirstNumberOfRows = null,
@@ -39,7 +39,7 @@ public static class PageDataExtensions
             CurrentPageNumber = pageNumber
         };
 
-    public static PageData SetNextPage(this PageData pageData, int pageNumber, string? cursor) =>
+    private static PageData SetNextPage(this PageData pageData, int pageNumber, string? cursor) =>
         pageData with
         {
             FirstNumberOfRows = pageData.CurrentPageSize,
@@ -49,7 +49,7 @@ public static class PageDataExtensions
             CurrentPageNumber = pageNumber
         };
 
-    public static PageData SetPreviousPage(this PageData pageData, int pageNumber, string? cursor) =>
+    private static PageData SetPreviousPage(this PageData pageData, int pageNumber, string? cursor) =>
         pageData with
         {
             FirstNumberOfRows = null,
@@ -59,7 +59,7 @@ public static class PageDataExtensions
             CurrentPageNumber = pageNumber
         };
 
-    public static PageData SetPageSize(this PageData pageData, int newPageSize) =>
+    private static PageData SetPageSize(this PageData pageData, int newPageSize) =>
         pageData switch
         {
             { LastNumberOfRows: { } } => pageData with
@@ -89,13 +89,6 @@ public static class PageDataExtensions
             { Page: var page } when page > pageData.CurrentPageNumber => pageData.SetNextPage(page, endCursor),
             { Page: var page } when page < pageData.CurrentPageNumber => pageData.SetPreviousPage(page, startCursor),
             _ => pageData
-        };
-
-    public static SortEnumType MapSortDirection(this SortDirection sortDirection) =>
-        sortDirection switch{
-            SortDirection.Ascending => SortEnumType.Asc,
-            SortDirection.Descending => SortEnumType.Desc,
-            _ => SortEnumType.Asc
         };
 
 }
