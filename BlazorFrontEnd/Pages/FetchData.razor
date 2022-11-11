@@ -2,7 +2,7 @@
 @using StrawberryShake
 @inject HttpClient Http
 
-<PageTitle>Weather forecast</PageTitle>
+<PageTitle>Person Table</PageTitle>
 
 <MudText Typo="Typo.h3" GutterBottom="true">Person List</MudText>
 <MudText Class="mb-8">This component demonstrates fetching data from the server.</MudText>
@@ -23,13 +23,13 @@
     <HeaderContent>
         <MudTh>
 
-            <MudTableSortLabel SortLabel="@(nameof(IGetPersons_Person_Nodes.Id))" T="IGetPersons_Person_Nodes">Id</MudTableSortLabel>
+            <MudTableSortLabel SortLabel="@(nameof(IPerson.Id))" T="IPerson">Id</MudTableSortLabel>
         </MudTh>
         <MudTh>
-            <MudTableSortLabel SortLabel="@(nameof(IGetPersons_Person_Nodes.Name))" T="IGetPersons_Person_Nodes">Name</MudTableSortLabel>
+            <MudTableSortLabel SortLabel="@(nameof(IPerson.Name))" T="IPerson">Name</MudTableSortLabel>
         </MudTh>
         <MudTh>
-            <MudTableSortLabel SortLabel="@(nameof(IGetPersons_Person_Nodes.Ordinal))" T="IGetPersons_Person_Nodes">Ordinal</MudTableSortLabel>
+            <MudTableSortLabel SortLabel="@(nameof(IPerson.Ordinal))" T="IPerson">Ordinal</MudTableSortLabel>
         </MudTh>
     </HeaderContent>
     <RowTemplate>
@@ -50,12 +50,12 @@
 
 @code {
     private PageData _pageData = new();
-    private IGetPersons_Person_PageInfo? _pageInfo;
+    private IPageInfo? _pageInfo;
 
     [Inject]
     private DemoGraphqlClient GraphqlClient { get; set; } = default!;
 
-    private async Task<TableData<IGetPersons_Person_Nodes>> ServerReload(TableState state)
+    private async Task<TableData<IPerson>> ServerReload(TableState state)
     {
         try
         {
@@ -75,7 +75,7 @@
                 _pageInfo = result.Data.Person.PageInfo;
                 _pageData = _pageData with {TotalCount = result.Data.Person.TotalCount};
 
-                return new TableData<IGetPersons_Person_Nodes>
+                return new TableData<IPerson>
                 {
                     TotalItems = result.Data.Person.TotalCount,
                     Items = result.Data.Person.Nodes
@@ -87,7 +87,7 @@
     // Snackbar.Add(error.Message, Severity.Error);
             }
 
-            return new TableData<IGetPersons_Person_Nodes>();
+            return new TableData<IPerson>();
         }
         catch (Exception e)
         {
@@ -101,13 +101,13 @@
     
     private static PersonSortInput[]? GetSorting(TableState state) =>
         state.SortLabel switch{
-            nameof(IGetPersons_Person_Nodes.Id) => new[] { new PersonSortInput { Id = state.SortDirection.MapSortDirection() } },
-            nameof(IGetPersons_Person_Nodes.Name) => new[] { new PersonSortInput { Name = state.SortDirection.MapSortDirection() } },
-            nameof(IGetPersons_Person_Nodes.Ordinal) => new[] { new PersonSortInput { Ordinal = state.SortDirection.MapSortDirection() } },
+            nameof(IPerson.Id) => new[] { new PersonSortInput { Id = state.SortDirection.MapSortDirection() } },
+            nameof(IPerson.Name) => new[] { new PersonSortInput { Name = state.SortDirection.MapSortDirection() } },
+            nameof(IPerson.Ordinal) => new[] { new PersonSortInput { Ordinal = state.SortDirection.MapSortDirection() } },
             _ => null
             };
 
-    private MudTable<IGetPersons_Person_Nodes> _table = default!;
+    private MudTable<IPerson> _table = default!;
 
     private void OnSearch(string s)
     {

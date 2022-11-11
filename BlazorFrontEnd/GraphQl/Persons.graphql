@@ -2,24 +2,30 @@ query GetPersons($where: PersonFilterInput, $order: [ PersonSortInput! ],
     $first: Int, $last: Int, $before: String, $after: String){
     person(before: $before, after: $after, first: $first, last: $last, where: $where, order: $order){
         nodes {
-            id
-            name
-            ordinal
+            ...Person
         }
         edges {
             node {
-                id
-                name
-                ordinal
+                ...Person
             }
             cursor
         }
         pageInfo {
-            hasNextPage
-            hasPreviousPage
-            startCursor
-            endCursor
+            ...PageInfo
         }
         totalCount
     }
+}
+
+fragment PageInfo on PageInfo{
+    hasPreviousPage
+    hasNextPage
+    startCursor
+    endCursor
+}
+
+fragment Person on Person{
+    id 
+    name
+    ordinal
 }
